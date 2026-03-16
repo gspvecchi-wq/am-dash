@@ -218,7 +218,7 @@
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 // Substitua pela URL do seu Cloudflare Worker após o deploy
-const WORKER_URL = 'https://sweet-frost-b4a9.aceleradormedico2021.workers.dev';
+const WORKER_URL = 'https://am-dashboard-worker.SEU_USUARIO.workers.dev';
 
 const LABEL_META = {
   113: { label: 'Sem Resposta',   color: '#888780' },
@@ -264,6 +264,7 @@ function renderGeral() {
   const { sessao, meteorico } = state;
   const totalFat = sessao ? sessao.totalFat : 0;
   const totalVendas = sessao ? sessao.totalVendas : 0;
+  const lastWeek = sessao && sessao.weeks.length > 0 ? sessao.weeks[sessao.weeks.length - 1] : null;
 
   document.getElementById('geral-content').innerHTML = `
     <div class="alerts">
@@ -281,8 +282,8 @@ function renderGeral() {
       </div>
     </div>
 
-    <div class="section-label">Consolidado YTD</div>
-    <div class="metrics metrics-4" style="margin-bottom:24px">
+    <div class="section-label" style="margin-top:28px">Consolidado YTD</div>
+    <div class="metrics metrics-4" style="margin-bottom:32px">
       <div class="metric-card">
         <div class="metric-label">Faturamento</div>
         <div class="metric-value">${fmtK(totalFat)}</div>
@@ -301,8 +302,33 @@ function renderGeral() {
       </div>
     </div>
 
-    <div class="section-label">Semana atual — Sessão Estratégica</div>
-    ${sessao && sessao.weeks.length > 0 ? renderWeekSummaryCard(sessao.weeks[sessao.weeks.length - 1]) : '<div class="loading">Sem dados de semana</div>'}
+    ${lastWeek ? `
+      <div class="section-label">Semana atual — Sessão Estratégica (${weekLabel(lastWeek.weekStart)})</div>
+      <div class="metrics metrics-4" style="margin-bottom:20px">
+        <div class="metric-card">
+          <div class="metric-label">Deals</div>
+          <div class="metric-value">${lastWeek.deals.length}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Agendadas</div>
+          <div class="metric-value">${lastWeek.agendadas}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Realizadas</div>
+          <div class="metric-value">${lastWeek.realizadas}</div>
+          <div class="metric-sub">show up ${pct(lastWeek.realizadas, lastWeek.agendadas)}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Vendas</div>
+          <div class="metric-value ${lastWeek.vendas > 0 ? 'success' : ''}">${lastWeek.vendas}</div>
+          <div class="metric-sub">${fmtK(lastWeek.faturamento)}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Etiquetas — semana atual</div>
+        ${renderEtiquetasSmall(lastWeek.labels, Object.values(lastWeek.labels).reduce((a,b)=>a+b,0))}
+      </div>
+    ` : ''}
   `;
 }
 
